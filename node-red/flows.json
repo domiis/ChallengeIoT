@@ -1,0 +1,716 @@
+[
+    {
+        "id": "e9b39b7eb7f7108a",
+        "type": "tab",
+        "label": "Fluxo 3",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "233178e208897b89",
+        "type": "mqtt in",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Subscriber Motos",
+        "topic": "mottu/patio/motos",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "c7a7d7c8.8b6a38",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 80,
+        "y": 340,
+        "wires": [
+            [
+                "08a844c787504296",
+                "87011af299833c26"
+            ]
+        ]
+    },
+    {
+        "id": "61b0562fbebc49f0",
+        "type": "ui_template",
+        "z": "e9b39b7eb7f7108a",
+        "group": "b4d4e0bd1d2a77f2",
+        "name": "Prontas para Alugar",
+        "order": 1,
+        "width": 6,
+        "height": 8,
+        "format": "<div style=\"width: 100%; padding: 16px; margin-bottom: 32px; box-sizing: border-box; overflow: hidden;\">\n  <div style=\"display: flex; flex-wrap: wrap; gap: 64px; justify-content: center;\">\n    <div style=\"flex: 1 1 350px; max-width: 100%; background-color: #198754; color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\">\n      <div style=\"background-color: rgba(0, 0, 0, 0.15); padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.2);\">\n        <h4 style=\"margin: 0; font-size: 1.25rem;\">Prontas para Alugar</h4>\n      </div>\n      <div style=\"padding: 16px; height: calc(70vh - 112px); overflow-y: auto; margin-right: -16px;\">\n        <div ng-repeat=\"moto in prontas\" style=\"margin-bottom: 16px;\">\n          <p style=\"margin: 0 0 4px;\"><strong>{{moto.id}}</strong> - {{moto.placa}} <em><strong>({{moto.modelo}})</strong></em></p>\n          <p style=\"margin: 0 0 8px;\"><strong>Latitude:</strong> {{moto.lat | number:4}}, <strong>Longitude:</strong> {{moto.lon | number:4}}</p>\n          <button ng-click=\"localizar(moto)\" style=\"background-color: #fff; color: #198754; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;\">\n            📍 Localizar\n          </button>\n          <hr style=\"border-top: 1px solid rgba(255,255,255,0.3); margin: 12px 0 0;\">\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n<script>\n  (function(scope) {\n    scope.$watch('msg', function(msg) {\n      if (msg && msg.payload && msg.payload.prontas) {\n        scope.prontas = msg.payload.prontas || [];\n      } else {\n        scope.prontas = scope.msg._ui.node.context().get(\"prontas\") || [];\n      }\n      if (!scope.$$phase) scope.$applyAsync();\n    });\n    scope.localizar = function(moto) {\n      scope.send({\n        payload: {\n          action: \"localizar\",\n          moto: moto\n        }\n      });\n    };\n  })(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 740,
+        "y": 180,
+        "wires": [
+            [
+                "26dce6b8db299fb3"
+            ]
+        ]
+    },
+    {
+        "id": "87011af299833c26",
+        "type": "function",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Armazenar Moto",
+        "func": "if (!flow.get(\"prontas\")) flow.set(\"prontas\", []);\nif (!flow.get(\"pendentes\")) flow.set(\"pendentes\", []);\nif (!flow.get(\"manutencao\")) flow.set(\"manutencao\", []);\n\nconst id = msg.payload.id;\n\nconst prontas = flow.get(\"prontas\").filter(m => m.id !== id);\nconst pendentes = flow.get(\"pendentes\").filter(m => m.id !== id);\nconst manutencao = flow.get(\"manutencao\").filter(m => m.id !== id);\n\nswitch (msg.payload.status) {\n    case 0: prontas.push(msg.payload); break;\n    case 1: pendentes.push(msg.payload); break;\n    case 2: manutencao.push(msg.payload); break;\n}\n\nflow.set(\"prontas\", prontas);\nflow.set(\"pendentes\", pendentes);\nflow.set(\"manutencao\", manutencao);\n\nreturn [\n    {payload: {\"prontas\": prontas}},\n    {payload: {\"pendentes\": pendentes}},\n    {payload: {\"manutencao\": manutencao}}\n];",
+        "outputs": 3,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 340,
+        "wires": [
+            [
+                "61b0562fbebc49f0"
+            ],
+            [
+                "72ce8cf3e5a7190c"
+            ],
+            [
+                "c32f1965dd7aee5e"
+            ]
+        ]
+    },
+    {
+        "id": "08a844c787504296",
+        "type": "debug",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Debug MQTT",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 180,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "7b8bbad030409b19",
+        "type": "ui_worldmap",
+        "z": "e9b39b7eb7f7108a",
+        "group": "b4d4e0bd1d2a77f2",
+        "order": 3,
+        "width": 10,
+        "height": 6,
+        "name": "Localização de Motos Prontas",
+        "lat": "",
+        "lon": "",
+        "zoom": "",
+        "layer": "OSMG",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "hide",
+        "layers": "hide",
+        "panit": "true",
+        "panlock": "true",
+        "zoomlock": "false",
+        "hiderightclick": "true",
+        "coords": "dms",
+        "showgrid": "false",
+        "showruler": "false",
+        "allowFileDrop": "false",
+        "path": "/worldmap",
+        "overlist": "DR,CO,RA,DN,HM",
+        "maplist": "OSMG,OSMC,EsriC,EsriS,EsriT,EsriDG,UKOS",
+        "mapname": "",
+        "mapurl": "",
+        "mapopt": "",
+        "mapwms": false,
+        "x": 1920,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "72ce8cf3e5a7190c",
+        "type": "ui_template",
+        "z": "e9b39b7eb7f7108a",
+        "group": "0d3aae216ba72cbc",
+        "name": "Pendentes de Regularização",
+        "order": 1,
+        "width": 6,
+        "height": 8,
+        "format": "<div style=\"width: 100%; padding: 16px; margin-bottom: 32px; box-sizing: border-box; overflow: hidden;\">\n  <div style=\"display: flex; flex-wrap: wrap; gap: 64px; justify-content: center;\">\n    <div style=\"flex: 1 1 350px; max-width: 100%; background-color: #c9cb34; color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\">\n      <div style=\"background-color: rgba(0, 0, 0, 0.15); padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.2);\">\n        <h4 style=\"margin: 0; font-size: 1.25rem;\">Pendentes de Regularização</h4>\n      </div>\n      <div style=\"padding: 16px; height: calc(70vh - 112px); overflow-y: auto; margin-right: -16px;\">\n        <div ng-repeat=\"moto in pendentes\" style=\"margin-bottom: 16px;\">\n          <p style=\"margin: 0 0 4px;\"><strong>{{moto.id}}</strong> - {{moto.placa}} <em><strong>({{moto.modelo}})</strong></em></p>\n          <p style=\"margin: 0 0 8px;\"><strong>Latitude:</strong> {{moto.lat | number:4}}, <strong>Longitude:</strong> {{moto.lon | number:4}}</p>\n          <button ng-click=\"localizar_pendente(moto)\" style=\"background-color: #fff; color: #c9cb34; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;\">\n            📍 Localizar\n          </button>\n          <hr style=\"border-top: 1px solid rgba(255,255,255,0.3); margin: 12px 0 0;\">\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n<script>\n  (function(scope) {\n    scope.$watch('msg', function(msg) {\n      if (msg && msg.payload && msg.payload.pendentes) {\n        scope.pendentes = msg.payload.pendentes || [];\n      } else {\n        scope.pendentes = scope.msg._ui.node.context().get(\"pendentes\") || [];\n      }\n      if (!scope.$$phase) scope.$applyAsync();\n    });\n    scope.localizar_pendente = function(moto) {\n      scope.send({\n        payload: {\n          action: \"localizar\",\n          moto: moto\n        }\n      });\n    };\n  })(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 720,
+        "y": 300,
+        "wires": [
+            [
+                "47ef4d8b15b77699"
+            ]
+        ]
+    },
+    {
+        "id": "c32f1965dd7aee5e",
+        "type": "ui_template",
+        "z": "e9b39b7eb7f7108a",
+        "group": "b53dc7143f9a04bf",
+        "name": "Para Manutenção",
+        "order": 1,
+        "width": 6,
+        "height": 8,
+        "format": "<div style=\"width: 100%; padding: 16px; margin-bottom: 32px; box-sizing: border-box; overflow: hidden;\">\n  <div style=\"display: flex; flex-wrap: wrap; gap: 64px; justify-content: center;\">\n    <div style=\"flex: 1 1 350px; max-width: 100%; background-color: #cb3434; color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\">\n      <div style=\"background-color: rgba(0, 0, 0, 0.15); padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.2);\">\n        <h4 style=\"margin: 0; font-size: 1.25rem;\">Para Manutenção</h4>\n      </div>\n      <div style=\"padding: 16px; height: calc(70vh - 112px); overflow-y: auto; margin-right: -16px;\">\n        <div ng-repeat=\"moto in manutencao\" style=\"margin-bottom: 16px;\">\n          <p style=\"margin: 0 0 4px;\"><strong>{{moto.id}}</strong> - {{moto.placa}} <em><strong>({{moto.modelo}})</strong></em></p>\n          <p style=\"margin: 0 0 8px;\"><strong>Latitude:</strong> {{moto.lat | number:4}}, <strong>Longitude:</strong> {{moto.lon | number:4}}</p>\n          <button ng-click=\"localizar_manutencao(moto)\" style=\"background-color: #fff; color: #cb3434; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;\">\n            📍 Localizar\n          </button>\n          <hr style=\"border-top: 1px solid rgba(255,255,255,0.3); margin: 12px 0 0;\">\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n<script>\n  (function(scope) {\n    scope.$watch('msg', function(msg) {\n      if (msg && msg.payload && msg.payload.manutencao) {\n        scope.manutencao = msg.payload.manutencao || [];\n      } else {\n        scope.manutencao = scope.msg._ui.node.context().get(\"manutencao\") || [];\n      }\n      if (!scope.$$phase) scope.$applyAsync();\n    });\n    scope.localizar_manutencao = function(moto) {\n      scope.send({\n        payload: {\n          action: \"localizar\",\n          moto: moto\n        }\n      });\n    };\n  })(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 730,
+        "y": 420,
+        "wires": [
+            [
+                "853ed624e8b702b2"
+            ]
+        ]
+    },
+    {
+        "id": "b2fdad0e54b1c1b9",
+        "type": "debug",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Prontas para Alugar",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1860,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "e309611fa32417d3",
+        "type": "debug",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Pendentes de Regularização",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1880,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "18751147c065e6f2",
+        "type": "debug",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Para Manutenção",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1850,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "26dce6b8db299fb3",
+        "type": "switch",
+        "z": "e9b39b7eb7f7108a",
+        "name": "",
+        "property": "payload.action",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "localizar",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 950,
+        "y": 180,
+        "wires": [
+            [
+                "176d0f3d6d906889"
+            ]
+        ]
+    },
+    {
+        "id": "176d0f3d6d906889",
+        "type": "function",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Filtrar informações para worldmap",
+        "func": "msg.payload = [\n    {clear: true},\n    {\n        name: msg.payload.moto.id,\n        lat: msg.payload.moto.lat,\n        lon: msg.payload.moto.lon,\n        layer: \"DR\"\n    }\n];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1220,
+        "y": 180,
+        "wires": [
+            [
+                "b2fdad0e54b1c1b9",
+                "2a1a726bc08b1da7"
+            ]
+        ]
+    },
+    {
+        "id": "47ef4d8b15b77699",
+        "type": "switch",
+        "z": "e9b39b7eb7f7108a",
+        "name": "",
+        "property": "payload.action",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "localizar",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 930,
+        "y": 300,
+        "wires": [
+            [
+                "dd5c3695c5724fde"
+            ]
+        ]
+    },
+    {
+        "id": "dd5c3695c5724fde",
+        "type": "function",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Filtrar informações para worldmap",
+        "func": "msg.payload = [\n    {clear: true},\n    {\n        name: msg.payload.moto.id,\n        lat: msg.payload.moto.lat,\n        lon: msg.payload.moto.lon,\n        layer: \"DR\"\n    }\n];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1220,
+        "y": 300,
+        "wires": [
+            [
+                "e309611fa32417d3",
+                "9b4e90b8a7de30bf"
+            ]
+        ]
+    },
+    {
+        "id": "16528da0b02a2021",
+        "type": "ui_worldmap",
+        "z": "e9b39b7eb7f7108a",
+        "group": "0d3aae216ba72cbc",
+        "order": 3,
+        "width": 10,
+        "height": 6,
+        "name": "Localização de Motos Pendentes",
+        "lat": "",
+        "lon": "",
+        "zoom": "",
+        "layer": "OSMG",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "hide",
+        "layers": "hide",
+        "panit": "true",
+        "panlock": "true",
+        "zoomlock": "false",
+        "hiderightclick": "true",
+        "coords": "dms",
+        "showgrid": "false",
+        "showruler": "false",
+        "allowFileDrop": "false",
+        "path": "/worldmap",
+        "overlist": "DR,CO,RA,DN,HM",
+        "maplist": "OSMG,OSMC,EsriC,EsriS,EsriT,EsriDG,UKOS",
+        "mapname": "",
+        "mapurl": "",
+        "mapopt": "",
+        "mapwms": false,
+        "x": 1950,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "853ed624e8b702b2",
+        "type": "switch",
+        "z": "e9b39b7eb7f7108a",
+        "name": "",
+        "property": "payload.action",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "localizar",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 930,
+        "y": 420,
+        "wires": [
+            [
+                "a828aceb9e113c18"
+            ]
+        ]
+    },
+    {
+        "id": "a828aceb9e113c18",
+        "type": "function",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Filtrar informações para worldmap",
+        "func": "msg.payload = [\n    {clear: true},\n    {\n        name: msg.payload.moto.id,\n        lat: msg.payload.moto.lat,\n        lon: msg.payload.moto.lon,\n        layer: \"DR\"\n    }\n];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1220,
+        "y": 420,
+        "wires": [
+            [
+                "18751147c065e6f2",
+                "f905a581e0b91649"
+            ]
+        ]
+    },
+    {
+        "id": "893cafbccb661397",
+        "type": "ui_worldmap",
+        "z": "e9b39b7eb7f7108a",
+        "group": "b53dc7143f9a04bf",
+        "order": 3,
+        "width": 10,
+        "height": 6,
+        "name": "Localização de Motos em Manutenção",
+        "lat": "",
+        "lon": "",
+        "zoom": "",
+        "layer": "OSMG",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "hide",
+        "layers": "hide",
+        "panit": "true",
+        "panlock": "true",
+        "zoomlock": "false",
+        "hiderightclick": "true",
+        "coords": "dms",
+        "showgrid": "false",
+        "showruler": "false",
+        "allowFileDrop": "false",
+        "path": "/worldmap",
+        "overlist": "DR,CO,RA,DN,HM",
+        "maplist": "OSMG,OSMC,EsriC,EsriS,EsriT,EsriDG,UKOS",
+        "mapname": "",
+        "mapurl": "",
+        "mapopt": "",
+        "mapwms": false,
+        "x": 1920,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "f35bb8c552a3e5c8",
+        "type": "inject",
+        "z": "e9b39b7eb7f7108a",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"action\": \"refresh\"}",
+        "payloadType": "json",
+        "x": 120,
+        "y": 260,
+        "wires": [
+            [
+                "87011af299833c26"
+            ]
+        ]
+    },
+    {
+        "id": "2a1a726bc08b1da7",
+        "type": "delay",
+        "z": "e9b39b7eb7f7108a",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "100",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "0.1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1610,
+        "y": 180,
+        "wires": [
+            [
+                "7b8bbad030409b19"
+            ]
+        ]
+    },
+    {
+        "id": "9b4e90b8a7de30bf",
+        "type": "delay",
+        "z": "e9b39b7eb7f7108a",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "100",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "0.1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1610,
+        "y": 300,
+        "wires": [
+            [
+                "16528da0b02a2021"
+            ]
+        ]
+    },
+    {
+        "id": "f905a581e0b91649",
+        "type": "delay",
+        "z": "e9b39b7eb7f7108a",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "100",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "0.1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1610,
+        "y": 420,
+        "wires": [
+            [
+                "893cafbccb661397"
+            ]
+        ]
+    },
+    {
+        "id": "d9a4300382322816",
+        "type": "mqtt out",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Publisher Comandos",
+        "topic": "mottu/patio/comandos",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "c7a7d7c8.8b6a38",
+        "x": 1400,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "37ce4042a07a2246",
+        "type": "debug",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Debug Comandos",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1410,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "77ab9aa665c59aaa",
+        "type": "inject",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Comando: Pronta para Alugar",
+        "props": [
+            {
+                "p": "payload",
+                "v": "PRONTA_PARA_ALUGAR",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 1100,
+        "y": 580,
+        "wires": [
+            [
+                "d9a4300382322816"
+            ]
+        ]
+    },
+    {
+        "id": "8bf7846f2e1cfc27",
+        "type": "inject",
+        "z": "e9b39b7eb7f7108a",
+        "name": "Comando: Pendente Regularização",
+        "props": [
+            {
+                "p": "payload",
+                "v": "PENDENTE_REGULARIZACAO",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 1100,
+        "y": 620,
+        "wires": [
+            [
+                "d9a4300382322816"
+            ]
+        ]
+    },
+    {
+        "id": "c7a7d7c8.8b6a38",
+        "type": "mqtt-broker",
+        "name": "Broker HiveMQ",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {}
+    },
+    {
+        "id": "b4d4e0bd1d2a77f2",
+        "type": "ui_group",
+        "name": "Motos Prontas para Alugar",
+        "tab": "03290e4476025264",
+        "order": 1,
+        "disp": true,
+        "width": 16,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "0d3aae216ba72cbc",
+        "type": "ui_group",
+        "name": "Motos Pendentes de Regularização",
+        "tab": "1ff047ccf21666a0",
+        "order": 1,
+        "disp": true,
+        "width": 16,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "b53dc7143f9a04bf",
+        "type": "ui_group",
+        "name": "Motos Para Manutenção",
+        "tab": "566f87291bd67faa",
+        "order": 1,
+        "disp": true,
+        "width": 16,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "03290e4476025264",
+        "type": "ui_tab",
+        "name": "Localizador de Motos: Prontas para Alugar",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "1ff047ccf21666a0",
+        "type": "ui_tab",
+        "name": "Localizador de Motos: Pendentes de Regularização",
+        "icon": "dashboard",
+        "order": 2,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "566f87291bd67faa",
+        "type": "ui_tab",
+        "name": "Localizador de Motos: Para Manutenção",
+        "icon": "dashboard",
+        "order": 3,
+        "disabled": false,
+        "hidden": false
+    }
+]
